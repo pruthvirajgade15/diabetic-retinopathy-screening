@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+/.pnp
+.pnp.js
+
+# Production Next.js build
+.next/
+out/
+build/
+dist/
+
+# Environment variables
+.env*.local
+.env
+.env.production
+
+# Vercel & v0 sandbox files
+.vercel/
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+
+# MATLAB temporary artifacts
+*.asv
+*.slxc
+*.mex*
+*.log
+screening-report.mat
+
+# OS & Editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/

@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: retinasense-ai-dr-screening
+    env: node
+    plan: free
+    region: oregon
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.10.0
+      - key: PORT
+        value: 10000

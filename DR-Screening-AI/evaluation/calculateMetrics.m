@@ -1,0 +1,4 @@
+function metrics=calculateMetrics(trueLabels,predLabels,scores)
+trueLabels=categorical(trueLabels); predLabels=categorical(predLabels); classes=categories(trueLabels); cm=confusionmat(trueLabels,predLabels,'Order',classes); tp=diag(cm); precision=tp./max(1,sum(cm,1)'); recall=tp./max(1,sum(cm,2)); f1=2*(precision.*recall)./max(eps,precision+recall); total=sum(cm,'all'); metrics.accuracy=sum(tp)/total; metrics.precision=precision; metrics.recall=recall; metrics.f1=f1; metrics.macroF1=mean(f1); metrics.sensitivity=recall; metrics.specificity=(sum(cm,'all')-sum(cm,2)-sum(cm,1)'+tp)./max(1,total-sum(cm,2)); metrics.balancedAccuracy=mean(recall); metrics.confusionMatrix=cm;
+if nargin>=3 && ~isempty(scores), [~,~,~,metrics.auroc]=perfcurve(trueLabels,scores(:,2),classes{2}); else, metrics.auroc=NaN;end
+end
