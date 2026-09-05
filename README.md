@@ -7,26 +7,39 @@
 [![MATLAB](https://img.shields.io/badge/MATLAB-R2024%2B%20%2F%20R2026a-ED592F?style=flat&logo=mathworks)](https://www.mathworks.com/)
 [![Deployment: Vercel](https://img.shields.io/badge/Deploy-Vercel-black?style=flat&logo=vercel)](https://vercel.com/)
 [![Deployment: Render](https://img.shields.io/badge/Deploy-Render-46E3B7?style=flat&logo=render)](https://render.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 An enterprise-grade, clinical tele-ophthalmology decision support system for **Diabetic Retinopathy (DR)** screening featuring **pure image-driven pathology classification**, real-time **Image Quality Assessment (IQA)**, and pixel-grounded **Explainable AI (XAI) Grad-CAM** attention heatmaps.
 
 ---
 
 ## 📑 Table of Contents
-1. [Clinical Background & Objectives](#-clinical-background--objectives)
-2. [System Architecture & Clean Modularity](#-system-architecture--clean-modularity)
-3. [Algorithmic Workflow & Pipeline](#-algorithmic-workflow--pipeline)
-4. [Project Directory Layout](#-project-directory-layout)
-5. [Free Cloud Deployment](#-free-cloud-deployment)
-   - [Deploying to Vercel](#1-deploying-to-vercel-recommended)
-   - [Deploying to Render](#2-deploying-to-render)
-6. [Local Development & Setup](#-local-development--setup)
-7. [MATLAB Desktop & Core Backend (`DR-Screening-AI`)](#-matlab-desktop--core-backend-dr-screening-ai)
-8. [Clinical Safety & Medical Disclaimer](#-clinical-safety--medical-disclaimer)
+1. [Key Capabilities](#-key-capabilities)
+2. [Clinical Background & ICDR Grading](#-clinical-background--icdr-grading)
+3. [System Architecture](#-system-architecture)
+4. [Algorithmic Workflow & Pipeline](#-algorithmic-workflow--pipeline)
+5. [Project Directory Layout](#-project-directory-layout)
+6. [Cloud Deployment](#-cloud-deployment)
+   - [Deploy to Vercel (Recommended)](#1-deploy-to-vercel-recommended)
+   - [Deploy to Render](#2-deploy-to-render)
+7. [Local Development & Setup](#-local-development--setup)
+8. [MATLAB Desktop & Core Backend (`DR-Screening-AI`)](#-matlab-desktop--core-backend-dr-screening-ai)
+9. [Clinical Safety & Medical Disclaimer](#-clinical-safety--medical-disclaimer)
 
 ---
 
-## 🩺 Clinical Background & Objectives
+## ⚡ Key Capabilities
+
+- **Automated Image Quality Assessment (IQA)**: Real-time sharpness, exposure, and contrast quality gating ($55\%$ threshold) to catch and reject non-diagnostic or blurred scans before classification.
+- **Pure Vision-Driven Pathology Extraction**: Analyzes genuine pixel pathology—detecting microaneurysms, dot/blot hemorrhages across quadrants, hard lipid exudates, cotton wool spots, and neovascularization.
+- **Explainable AI (Grad-CAM)**: Generates localized JET colormap heatmaps to explain model focus directly on retinal lesions for clinician auditability.
+- **Interactive Multi-View Fundus Inspector**: Side-by-side inspection of Raw Scans, CLAHE/Graham preprocessed images, Grad-CAM overlays, and pathology lesion maps.
+- **Automated Clinical Reporting**: One-click generation and export of print-ready PDF screening reports with patient demographics, risk scores, and referral pathways.
+- **Dual-Engine Architecture**: Production Next.js 16 Web Application + standalone MATLAB App Designer (`DRScreeningApp.m`) deep learning suite.
+
+---
+
+## 🩺 Clinical Background & ICDR Grading
 
 Diabetic Retinopathy (DR) is the leading cause of preventable blindness among working-age adults globally. Timely detection through systematic screening and referral prevents severe vision loss in up to **95% of patients**.
 
@@ -42,9 +55,7 @@ RetinaSense™ AI implements the **International Clinical Diabetic Retinopathy (
 
 ---
 
-## 🏗️ System Architecture & Clean Modularity
-
-The application follows a clean 3-tier architectural separation:
+## 🏗️ System Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -90,8 +101,8 @@ graph TD
 
 1. **Automated Quality Assessment (IQA)**: Analyzes Laplacian gradient variance (sharpness), RMS contrast, and dynamic exposure. Scans with $\text{IQA} < 0.55$ are automatically flagged to prevent misclassification.
 2. **Preprocessing**: Applies Contrast Limited Adaptive Histogram Equalization (CLAHE) on the green channel, where hemoglobin optical absorption is maximized.
-3. **Pure Image-Driven Classification**: No hardcoded stage presets; the model analyzes the actual image pixels dynamically.
-4. **Explainable AI (Grad-CAM)**: Blends gradient-weighted activation maps directly onto pathological lesion hotspots for visual verification by ophthalmologists.
+3. **Pure Image-Driven Classification**: Evaluates morphological features, lesion density, and vascular changes directly from pixel data.
+4. **Explainable AI (Grad-CAM)**: Blends gradient-weighted activation maps directly onto pathological lesion hotspots for visual verification by clinicians.
 5. **Screening Report Generation**: Generates clean, print-ready PDF reports with patient metadata, image evidence, and clinician sign-off sections.
 
 ---
@@ -115,7 +126,7 @@ diabetic-retinopathy-screening/
 ├── 📁 config/                             # Static Clinical Reference Data
 │   ├── clinical-constants.ts             # 5 ICDR classes, color tokens & triage rules
 │   ├── sample-cohort.ts                  # Standardized reference validation cohort
-│   ├── benchmark-data.ts                 # Kappa ($0.928$), Sensitivity, Confusion Matrix
+│   ├── benchmark-data.ts                 # Kappa (0.928), Sensitivity, Confusion Matrix
 │   └── index.ts                          # Config barrel export
 │
 ├── 📁 services/                           # Pure Algorithmic & Processing Services
@@ -139,69 +150,57 @@ diabetic-retinopathy-screening/
 │   ├── 📁 reports/                        # ScreeningReportModal (Printable PDF)
 │   ├── 📁 analytics/                      # BenchmarksView (Model Performance Hub)
 │   ├── 📁 guidelines/                     # GuidelinesView (ICDR Reference Manual)
-│   └── 📁 ui/                             # Button primitive
+│   └── 📁 ui/                             # UI primitives
 │
 ├── 📁 DR-Screening-AI/                    # MATLAB Desktop & Core Deep Learning Engine
-│   ├── 📁 app/DRScreeningApp.m           # App Designer Desktop GUI (UIAxes-compatible)
-│   ├── 📁 config/                        # Model & training hyperparameters
+│   ├── 📁 app/DRScreeningApp.m           # App Designer Desktop GUI
+│   ├── 📁 config/                        # Model & training configurations
 │   ├── 📁 inference/                     # MATLAB screening pipeline
-│   ├── 📁 explainability/                # Native JET Grad-CAM colormap blending
+│   ├── 📁 explainability/                # Native Grad-CAM colormap blending
 │   ├── 📁 preprocessing/                 # Fundus circular crop, CLAHE, Graham normalization
 │   ├── 📁 quality/                       # MATLAB IQA algorithms (blur, exposure, contrast)
 │   ├── 📁 scripts/                       # Dataset preparation & test image generator
 │   └── 📁 tests/                         # MATLAB unit test suite
 │
 ├── render.yaml                           # 1-Click Free Render Blueprint
-├── components.json                       # Shadcn UI configuration
+├── components.json                       # Component configuration
 ├── next.config.mjs                       # Next.js build configuration
 ├── package.json                          # Node dependencies and scripts
-└── tsconfig.json                         # TypeScript path aliases (`@/*`)
+└── tsconfig.json                         # TypeScript path aliases (@/*)
 ```
 
 ---
 
-## 🌐 Free Cloud Deployment
+## 🌐 Cloud Deployment
 
-### 1. Deploying to Vercel (Recommended)
+### 1. Deploy to Vercel (Recommended)
 
-Vercel provides free global edge hosting for Next.js:
+Vercel provides instant global deployment with zero configuration for Next.js applications:
 
-#### Method A: Via Web Dashboard (Easiest)
-1. Push your repository to **GitHub**.
-2. Visit **[vercel.com](https://vercel.com)** and log in with your GitHub account.
+#### Option A: One-Click Web Import
+1. Push this repository to your **GitHub** account.
+2. Go to **[vercel.com](https://vercel.com)** and sign in.
 3. Click **"Add New..."** $\rightarrow$ **"Project"**.
 4. Select `diabetic-retinopathy-screening` and click **Import**.
-5. Keep default settings (Framework: `Next.js`, Build: `npm run build`) and click **Deploy**.
-6. Your application will be live with free SSL at `https://your-project.vercel.app`.
+5. Leave default settings intact (Framework Preset: `Next.js`) and click **Deploy**.
+6. Your live web application will be accessible at `https://your-project.vercel.app`.
 
-#### Method B: Via Terminal CLI
+#### Option B: Terminal CLI
 ```bash
 npx vercel
 ```
 
 ---
 
-### 2. Deploying to Render
+### 2. Deploy to Render
 
-This repository includes a [`render.yaml`](file:///c:/Users/Pruthviraj/OneDrive/Documents/diabetic-retinopathy-screening/render.yaml) blueprint for free deployment:
+This repository includes a [`render.yaml`](render.yaml) blueprint for free hosting:
 
-#### Method A: Using Blueprint
 1. Push your repository to **GitHub**.
-2. Visit **[render.com](https://render.com)** and sign in.
+2. Visit **[render.com](https://render.com)** and log in.
 3. Click **"New +"** $\rightarrow$ **"Blueprint"**.
-4. Connect your GitHub repository.
-5. Render will automatically configure the service under the **Free Plan**.
-6. Click **Apply**.
-
-#### Method B: Manual Web Service
-1. Click **"New +"** $\rightarrow$ **"Web Service"**.
-2. Connect your repository.
-3. Set:
-   - **Environment**: `Node`
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm run start`
-   - **Plan**: `Free`
-4. Click **Create Web Service**.
+4. Connect your GitHub repository and select the `main` branch.
+5. Click **Apply** to deploy automatically on Render's free web service tier.
 
 ---
 
@@ -224,9 +223,9 @@ npm install
 npm run dev
 
 # 4. Open in your browser
-# http://localhost:3000 (or http://localhost:3001)
+# http://localhost:3000
 
-# 5. Build for production
+# 5. Verify production build
 npm run build
 npm run start
 ```
@@ -235,7 +234,7 @@ npm run start
 
 ## 🔬 MATLAB Desktop & Core Backend (`DR-Screening-AI`)
 
-The MATLAB backend provides desktop App Designer support and deep learning training scripts:
+The MATLAB backend provides standalone App Designer GUI support and deep learning training/inference routines:
 
 ```matlab
 % 1. Open MATLAB and navigate to the backend folder
@@ -269,7 +268,7 @@ disp(table(results));
 ## 🛡️ Clinical Safety & Medical Disclaimer
 
 > **IMPORTANT MEDICAL NOTICE**:
-> This software is an artificial intelligence research and decision-support prototype. It is designed to assist trained ophthalmologists, optometrists, and healthcare practitioners in triaging diabetic retinopathy. It does **NOT** constitute a standalone medical diagnosis. Final diagnostic confirmation and treatment decisions must always be conducted by a certified eye-care professional.
+> This software is an artificial intelligence research and clinical decision-support prototype. It is designed to assist trained ophthalmologists, optometrists, and healthcare practitioners in screening and triaging diabetic retinopathy. It does **NOT** constitute a standalone medical diagnosis. Final diagnostic confirmation, clinical triage, and treatment decisions must always be made by a board-certified eye-care professional.
 
 ---
 
