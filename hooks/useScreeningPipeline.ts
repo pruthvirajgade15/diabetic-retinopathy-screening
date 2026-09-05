@@ -113,7 +113,7 @@ export function useScreeningPipeline(defaultCaseIndex = 2) {
         eye,
         hba1c,
         diabetesDuration,
-      }, selectedCase.trueStage),
+      }),
     reset,
   };
 }
