@@ -11,7 +11,7 @@ tp = diag(cm);
 precision = tp ./ max(1, sum(cm, 1)');
 recall = tp ./ max(1, sum(cm, 2));
 f1 = 2 * (precision .* recall) ./ max(eps, precision + recall);
-total = sum(cm, 'all');
+total = sum(cm(:));
 
 metrics.accuracy = sum(tp) / max(1, total);
 metrics.precision = precision;
@@ -37,7 +37,12 @@ if nargin >= 3 && ~isempty(scores)
                     aurocs(c) = NaN;
                 end
             end
-            metrics.auroc = mean(aurocs(~isnan(aurocs)));
+            validAurocs = aurocs(~isnan(aurocs));
+            if isempty(validAurocs)
+                metrics.auroc = NaN;
+            else
+                metrics.auroc = mean(validAurocs);
+            end
         end
     catch
         metrics.auroc = NaN;

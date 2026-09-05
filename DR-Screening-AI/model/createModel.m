@@ -8,9 +8,18 @@ try
     base = efficientnetb0;
     lgraph = layerGraph(base);
     learnable = find(arrayfun(@(l) isa(l, 'nnet.cnn.layer.FullyConnectedLayer'), lgraph.Layers), 1, 'last');
-    old = lgraph.Layers(learnable);
-    replacement = fullyConnectedLayer(cfg.numClasses, 'Name', old.Name, 'WeightLearnRateFactor', 10, 'BiasLearnRateFactor', 10);
-    lgraph = replaceLayer(lgraph, old.Name, replacement);
+    if ~isempty(learnable)
+        old = lgraph.Layers(learnable);
+        replacement = fullyConnectedLayer(cfg.numClasses, 'Name', old.Name, 'WeightLearnRateFactor', 10, 'BiasLearnRateFactor', 10);
+        lgraph = replaceLayer(lgraph, old.Name, replacement);
+    end
+    
+    % Replace classification output layer if present
+    classLayerIdx = find(arrayfun(@(l) isa(l, 'nnet.cnn.layer.ClassificationOutputLayer'), lgraph.Layers), 1, 'last');
+    if ~isempty(classLayerIdx)
+        newClassLayer = classificationLayer('Name', lgraph.Layers(classLayerIdx).Name);
+        lgraph = replaceLayer(lgraph, lgraph.Layers(classLayerIdx).Name, newClassLayer);
+    end
 catch
     % Resilient deep CNN architecture if external efficientnet toolbox package is not loaded
     layers = [

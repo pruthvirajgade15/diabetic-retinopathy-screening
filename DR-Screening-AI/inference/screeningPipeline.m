@@ -12,12 +12,12 @@ addParameter(p, 'ModelFile', cfg.modelFile);
 parse(p, varargin{:});
 
 if ischar(input) || isstring(input)
-    I = imread(input);
+    I = imread(char(input));
 else
     I = input;
 end
 
-if size(I, 3) == 4
+if size(I, 3) > 3
     I = I(:,:,1:3);
 end
 
@@ -35,6 +35,7 @@ if q.status == "Fail"
     result.confidence = 0.0;
     result.classProbabilities = zeros(1, cfg.numClasses);
     result.processedImage = I;
+    result.gradCAM = zeros(size(I, 1), size(I, 2));
     result.gradCAMOverlay = I;
     result.recommendation = "Obtain a clearer, well-exposed fundus photograph with pupil dilation if needed.";
     result.report = generateScreeningReport(result);
@@ -56,7 +57,11 @@ if isempty(net)
 end
 
 if ~isempty(net)
-    [classValue, label, confidence, probabilities] = predictDR(net, processed, cfg);
+    try
+        [classValue, label, confidence, probabilities] = predictDR(net, processed, cfg);
+    catch
+        [classValue, label, confidence, probabilities] = heuristicDRClassifier(processed, cfg);
+    end
 else
     % Fallback heuristic biomarker rule classifier if deep learning checkpoint is not on disk
     [classValue, label, confidence, probabilities] = heuristicDRClassifier(processed, cfg);
@@ -69,7 +74,8 @@ result.classProbabilities = probabilities;
 result.recommendation = screeningRecommendation(classValue, confidence, cfg);
 
 % 4. Explainable AI: Grad-CAM Attention Heatmap
-[result.gradCAM, result.gradCAMOverlay] = generateGradCAM(net, processed, classValue + 1, meta.displayImage, cfg.gradCAMLayer);
+camClass = max(1, min(cfg.numClasses, classValue + 1));
+[result.gradCAM, result.gradCAMOverlay] = generateGradCAM(net, processed, camClass, meta.displayImage, cfg.gradCAMLayer);
 
 % 5. Clinical Screening Report Structure
 result.report = generateScreeningReport(result);
@@ -78,7 +84,7 @@ end
 function [c, label, conf, probs] = heuristicDRClassifier(img, cfg)
 % Heuristic retinal feature analysis when offline or pre-training
 I = im2double(img);
-if size(I,3) == 1
+if size(I, 3) == 1
     G = I;
     R = I;
 else
@@ -87,7 +93,7 @@ else
 end
 
 % Detect red lesion anomalies & exudate contrast
-redContrast = std2(R);
+redContrast = std(R(:));
 darkSpotDensity = mean(R(:) < 0.45 & G(:) < 0.35);
 
 if darkSpotDensity > 0.12
@@ -118,7 +124,9 @@ elseif c == 2
     r = "Moderate Non-Proliferative DR. Refer to ophthalmologist for dilated fundus exam within 4-8 weeks.";
 elseif c == 3
     r = "Severe Non-Proliferative DR (4-2-1 rule). Prompt retina specialist referral within 2-4 weeks.";
-else
+elseif c == 4
     r = "Proliferative DR. Urgent referral to vitreoretinal specialist within 1-2 weeks (PRP / Anti-VEGF).";
+else
+    r = "Inconclusive scan. Repeat retinal imaging under optimal lighting and dilation.";
 end
 end
